@@ -1,0 +1,499 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Leadership Expectations Lucky Wheel</title>
+<style>
+* { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+body {
+  font-family: 'PingFang SC','Microsoft YaHei',sans-serif;
+  background: linear-gradient(135deg,#0071ce 0%,#004c91 100%);
+  min-height: 100vh;
+  padding: 12px;
+}
+
+/* Language Selection */
+#langScreen {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  padding: 20px;
+}
+.lang-card {
+  background: white;
+  border-radius: 20px;
+  box-shadow: 0 15px 40px rgba(0,0,0,0.25);
+  width: 100%;
+  max-width: 380px;
+  padding: 40px 30px;
+  text-align: center;
+}
+.lang-logo { color:#0071ce; font-size:28px; font-weight:bold; margin-bottom:8px; }
+.lang-subtitle { color:#888; font-size:14px; margin-bottom:32px; line-height:1.6; }
+.lang-heading { color:#004c91; font-size:18px; font-weight:bold; margin-bottom:22px; }
+.lang-btn {
+  display: block; width:100%; padding:16px; margin-bottom:14px;
+  border:none; border-radius:50px; font-size:18px; font-weight:bold;
+  cursor:pointer; transition:all 0.2s; touch-action:manipulation;
+}
+.lang-btn-cn { background:linear-gradient(to right,#0071ce,#004c91); color:white; box-shadow:0 4px 15px rgba(0,113,206,0.35); }
+.lang-btn-en { background:linear-gradient(to right,#ffc220,#e6ac00); color:#004c91; box-shadow:0 4px 15px rgba(255,194,32,0.35); }
+.lang-btn:active { transform:scale(0.97); }
+
+/* Game Screen */
+#gameScreen { display:none; }
+.game-container {
+  background:white; border-radius:16px; box-shadow:0 10px 30px rgba(0,0,0,0.2);
+  width:100%; max-width:480px; margin:0 auto; padding:18px 14px 24px;
+}
+.header { display:flex; align-items:center; justify-content:space-between; margin-bottom:12px; }
+.walmart-logo { color:#0071ce; font-size:22px; font-weight:bold; }
+.header-right { display:flex; align-items:center; gap:8px; }
+.game-stats { display:flex; gap:8px; font-size:13px; font-weight:bold; color:#004c91; }
+.stat-item { background:linear-gradient(to right,#f8f9fa,#e9ecef); padding:6px 12px; border-radius:8px; box-shadow:0 2px 5px rgba(0,0,0,0.1); }
+.lang-switch { background:none; border:2px solid #0071ce; color:#0071ce; border-radius:20px; padding:4px 10px; font-size:12px; font-weight:bold; cursor:pointer; touch-action:manipulation; }
+h1 { color:#004c91; font-size:19px; text-align:center; margin-bottom:10px; line-height:1.3; }
+.game-rules { background:#f8f9fa; border-left:4px solid #0071ce; padding:10px 12px; margin-bottom:16px; border-radius:8px; font-size:12px; color:#555; line-height:1.6; }
+.game-rules h3 { color:#004c91; margin-bottom:6px; font-size:13px; }
+.game-rules ul { padding-left:16px; }
+.game-rules li { margin-bottom:3px; }
+
+.wheel-wrapper { display:flex; flex-direction:column; align-items:center; gap:14px; }
+.wheel-container { position:relative; width:280px; height:280px; }
+#wheelSvg { transition:transform 5s cubic-bezier(0.25,0.1,0.1,1); transform-origin:center center; filter:drop-shadow(0 0 8px rgba(0,76,145,0.4)); }
+@keyframes wheelGlow {
+  0%   { filter:drop-shadow(0 0 8px rgba(0,113,206,0.4)); }
+  50%  { filter:drop-shadow(0 0 22px rgba(255,194,32,0.9)); }
+  100% { filter:drop-shadow(0 0 8px rgba(0,113,206,0.4)); }
+}
+.spinning { animation:wheelGlow 0.6s ease-in-out infinite; }
+.pointer {
+  position:absolute; top:-18px; left:50%; transform:translateX(-50%);
+  width:34px; height:50px; background:#ffc220;
+  clip-path:polygon(0% 0%, 100% 0%, 50% 100%);
+  z-index:10; box-shadow:0 3px 6px rgba(0,0,0,0.3); border:2px solid #e6ac00;
+}
+.selected-category {
+  width:100%; padding:12px 16px; background:linear-gradient(to right,#0071ce,#004c91);
+  border-radius:10px; font-size:15px; font-weight:bold; color:white;
+  min-height:50px; display:flex; align-items:center; justify-content:center;
+  text-align:center; box-shadow:0 4px 10px rgba(0,113,206,0.3);
+}
+.spin-button, .submit-button {
+  width:100%; background:linear-gradient(to right,#0071ce,#004c91);
+  color:white; border:none; padding:14px 20px; font-size:17px;
+  border-radius:50px; cursor:pointer; transition:all 0.2s;
+  box-shadow:0 4px 15px rgba(0,113,206,0.3); font-weight:bold; touch-action:manipulation;
+}
+.spin-button:active { transform:scale(0.97); }
+.spin-button:disabled, .submit-button:disabled { background:#bdc3c7; cursor:not-allowed; box-shadow:none; }
+.submit-button { background:linear-gradient(to right,#4CAF50,#388E3C); box-shadow:0 4px 15px rgba(76,175,80,0.3); font-size:15px; }
+.submit-button:active { transform:scale(0.97); }
+.word-buttons { display:grid; grid-template-columns:repeat(2,1fr); gap:8px; width:100%; margin-top:4px; }
+.word-button {
+  padding:10px 6px; background:#f5f5f5; border:2px solid #ddd; border-radius:8px;
+  cursor:pointer; transition:all 0.2s; font-size:12px; font-weight:bold; color:#333;
+  min-height:64px; display:flex; align-items:center; justify-content:center;
+  text-align:center; line-height:1.4; touch-action:manipulation;
+}
+.word-button:active { transform:scale(0.96); }
+.word-button.selected { background:#0071ce; color:white; border-color:#004c91; }
+.word-button.correct  { background:#4CAF50; color:white; border-color:#388E3C; }
+.word-button.incorrect{ background:#F44336; color:white; border-color:#D32F2F; }
+.word-button:disabled { cursor:not-allowed; opacity:0.75; }
+.result-message { margin-top:10px; padding:12px; border-radius:10px; font-size:14px; font-weight:bold; min-height:48px; display:flex; align-items:center; justify-content:center; text-align:center; line-height:1.5; }
+.correct-message   { background:#dff0d8; color:#3c763d; border:1px solid #d6e9c6; }
+.incorrect-message { background:#f2dede; color:#a94442; border:1px solid #ebccd1; }
+.modal-overlay { position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.7); display:flex; justify-content:center; align-items:center; z-index:1000; padding:20px; }
+.modal-content { background:white; border-radius:16px; padding:28px 22px; text-align:center; width:100%; max-width:360px; box-shadow:0 10px 30px rgba(0,0,0,0.3); }
+.modal-title   { color:#004c91; font-size:22px; margin-bottom:16px; }
+.modal-message { font-size:15px; margin-bottom:22px; line-height:1.7; color:#333; }
+.modal-button  { background:linear-gradient(to right,#0071ce,#004c91); color:white; border:none; padding:13px 32px; font-size:16px; border-radius:50px; cursor:pointer; box-shadow:0 4px 15px rgba(0,113,206,0.3); font-weight:bold; touch-action:manipulation; }
+.fixed-logo { position:fixed; bottom:14px; right:14px; z-index:999; }
+.fixed-logo img { width:40px; height:auto; border-radius:50%; box-shadow:0 2px 10px rgba(0,0,0,0.2); }
+</style>
+</head>
+<body>
+
+<!-- Language Selection Screen -->
+<div id="langScreen">
+  <div class="lang-card">
+    <div class="lang-logo">Walmart</div>
+    <div class="lang-subtitle">
+      &#x9886;&#x5BFC;&#x529B;&#x8981;&#x7D20;&#x5E78;&#x8FD0;&#x5927;&#x8F6C;&#x76D8;<br>
+      Leadership Expectations Lucky Wheel
+    </div>
+    <div class="lang-heading">&#x8BF7;&#x9009;&#x62E9;&#x8BED;&#x8A00; / Choose Language</div>
+    <button class="lang-btn lang-btn-cn" onclick="startGame('zh')">
+      &#x1F1E8;&#x1F1F3; &#x7B80;&#x4F53;&#x4E2D;&#x6587;
+    </button>
+    <button class="lang-btn lang-btn-en" onclick="startGame('en')">
+      &#x1F1FA;&#x1F1F8; English
+    </button>
+  </div>
+</div>
+
+<!-- Game Screen -->
+<div id="gameScreen">
+  <div class="game-container">
+    <div class="header">
+      <div class="walmart-logo">Walmart</div>
+      <div class="header-right">
+        <div class="game-stats">
+          <div class="stat-item" id="scoreLabel"></div>
+          <div class="stat-item" id="roundLabel"></div>
+        </div>
+        <button class="lang-switch" onclick="backToLang()">&#x1F310;</button>
+      </div>
+    </div>
+    <h1 id="gameTitle"></h1>
+    <div class="game-rules">
+      <h3 id="rulesTitle"></h3>
+      <ul id="rulesList"></ul>
+    </div>
+    <div class="wheel-wrapper">
+      <div class="wheel-container">
+        <div class="pointer"></div>
+        <svg id="wheelSvg" width="280" height="280" viewBox="0 0 280 280"></svg>
+      </div>
+      <button class="spin-button" id="spinButton"></button>
+      <div class="selected-category" id="selectedCategory"></div>
+      <div class="word-buttons" id="wordButtons"></div>
+      <button class="submit-button" id="submitButton" disabled><span id="submitLabel"></span></button>
+      <div class="result-message" id="resultMessage"></div>
+    </div>
+  </div>
+</div>
+
+<div class="fixed-logo">
+  <img src="https://aloha.walmartmobile.cn/user-center/upload/viewImage/bktuser-center-prod-8702570844139794433.png" alt="Logo" loading="lazy">
+</div>
+
+<script>
+const GAME_DATA = {
+  zh: {
+    categories: {
+      "\u5C0A\u91CD\u4E2A\u4EBA": ["\u4E3B\u52A8\u503E\u542C\uFF0C\u6709\u6548\u6C9F\u901A","\u79EF\u6781\u53CD\u9988\u4E0E\u8F85\u5BFC","\u6B63\u9762\u5F71\u54CD\u53CA\u6FC0\u53D1\u4ED6\u4EBA"],
+      "\u8BDA\u4FE1\u884C\u4E8B": ["\u4FDD\u6301\u548C\u5021\u5BFC\u8BDA\u4FE1\u3001\u9053\u5FB7\u548C\u5408\u89C4\u884C\u4E3A","\u4EE5\u8EAB\u4F5C\u5219\uFF0C\u516C\u4EC6\u9886\u5BFC","\u81EA\u6211\u89C9\u5BDF\uFF0C\u5F00\u8BDA\u5E03\u516C"],
+      "\u670D\u52A1\u987E\u5BA2\u548C\u4F1A\u5458": ["\u5EFA\u7ACB\u5168\u6E20\u9053\u601D\u7EF4\u548C\u5168\u5C40\u89C6\u89D2","\u8DF5\u884CEDLP/EDLC\u4E1A\u52A1\u6A21\u5F0F","\u6574\u5408\u6570\u636E\u5206\u6790\u4E0E\u987E\u5BA2/\u4F1A\u5458\u6D1E\u5BDF"],
+      "\u8FFD\u6C42\u5353\u8D8A": ["\u4FDD\u6301\u597D\u5947\u5FC3\u4E0E\u6210\u957F\u578B\u601D\u7EF4","\u5728\u51B3\u7B56\u4E2D\u5C55\u73B0\u52C7\u6C14\uFF0C\u9F13\u52B1\u521B\u65B0\uFF0C\u7406\u6027\u5192\u9669","\u63A8\u52A8\u6570\u5B57\u5316\u548C\u53D8\u9769\uFF0C\u654F\u6377\u884C\u52A8\uFF0C\u6301\u7EED\u6539\u8FDB"]
+    },
+    ui: {
+      title: "\u9886\u5BFC\u529B\u8981\u7D20\u5E78\u8FD0\u5927\u8F6C\u76D8",
+      rulesTitle: "\u6E38\u620F\u89C4\u5219\uFF1A",
+      rules: [
+        "\u70B9\u51FB\u201C\u8F6C\u52A8\u8F6C\u76D8\u201D\uFF0C\u8F6C\u76D8\u968F\u673A\u505C\u5728\u4E00\u4E2A\u9886\u5BFC\u529B\u8981\u7D20",
+        "\u4ECE\u4E0B\u65B9\u8BCD\u8BED\u4E2D\u9009\u62E9 3 \u4E2A\u5C5E\u4E8E\u8BE5\u8981\u7D20\u7684\u8BCD\u8BED",
+        "\u6BCF\u9009\u5BF9\u4E00\u4E2A\u5F97 1 \u5206\uFF0C\u5171 3 \u8F6E\uFF0C\u6EE1\u5206 9 \u5206\uFF0C\u5F97\u5206 \u2265 8 \u5206\u901A\u5173"
+      ],
+      spinBtn: "\uD83C\uDFAF \u8F6C\u52A8\u8F6C\u76D8",
+      spinPrompt: "\u8BF7\u8F6C\u52A8\u8F6C\u76D8\u9009\u62E9\u9886\u5BFC\u529B\u8981\u7D20",
+      scoreLabel: "\u5F97\u5206",
+      roundLabel: "\u56DE\u5408",
+      submitBtn: function(n){ return "\u63D0\u4EA4\u7B54\u6848\uFF08\u5DF2\u9009 "+n+"/3\uFF09"; },
+      perfect: function(s){ return "\u5B8C\u7F8E\uFF01\u5168\u90E8\u6B63\u786E\uFF01\u83B7\u5F97 "+s+" \u5206\u3002"; },
+      partial: function(n,s,ans){ return "\u9009\u5BF9 "+n+" \u4E2A\uFF0C\u83B7\u5F97 "+s+" \u5206\u3002\u6B63\u786E\u7B54\u6848\uFF1A"+ans; },
+      sep: "\u3001",
+      roundEnd: "\u56DE\u5408\u7ED3\u675F", gameEnd: "\u6E38\u620F\u7ED3\u675F",
+      roundMsg: function(r,s,t){ return "\u7B2C"+r+"\u56DE\u5408\u7ED3\u675F\uFF01\u672C\u8F6E\u83B7\u5F97 <strong>"+s+"</strong> \u5206\uFF0C\u603B\u5206 <strong>"+t+"</strong> \u5206\u3002"; },
+      nextRound: function(r){ return "<br><br>\u51C6\u5907\u5F00\u59CB\u7B2C "+r+" \u56DE\u5408\uFF01"; },
+      continueBtn: "\u7EE7\u7EED\u6E38\u620F", viewResult: "\u67E5\u770B\u7ED3\u679C",
+      passTitle: "\u606D\u559C\u901A\u5173\uFF01\uD83C\uDFC6", failTitle: "\u6E38\u620F\u7ED3\u675F",
+      passMsg: function(s){ return "\uD83C\uDF89 \u606D\u559C\u60A8\uFF01\u4EE5 <strong>"+s+"</strong> \u5206\u6210\u529F\u901A\u5173\uFF01"; },
+      failMsg: function(s){ return "\u5F88\u9057\u61BE\uFF0C\u60A8\u83B7\u5F97\u4E86 <strong>"+s+"</strong> \u5206\uFF0C\u672A\u80FD\u8FBE\u5230 8 \u5206\u7684\u901A\u5173\u6807\u51C6\u3002\u8BF7\u518D\u63A5\u518D\u5389\uFF01"; },
+      restart: "\u91CD\u65B0\u5F00\u59CB"
+    }
+  },
+  en: {
+    categories: {
+      "Respect the Individual": ["Listen actively and communicate with impact","Proactive feedback and coaching","Positively influence and inspire others"],
+      "Act with Integrity": ["Maintains and promotes integrity, ethics and compliance","Models and acts as a servant leader","Self-awareness and be honest and transparent"],
+      "Serve Our Customers and Members": ["Establish an omnichannel mindset with holistic perspective","Apply EDLP/EDLC business models","Integrating data analytics, customer/member insights"],
+      "Strive for Excellence": ["Maintains curiosity and a growth mindset","Demonstrate courage in decision-making, foster innovation, and take calculated risks","Drive digitalization and transformation,take agile action, and continuous improvements"]
+    },
+    ui: {
+      title: "Leadership Expectations Lucky Wheel",
+      rulesTitle: "How to Play:",
+      rules: [
+        "Tap \"Spin the Wheel\" — it lands on a random Leadership Expectations",
+        "Select 3 words below that belong to that element",
+        "1 point per correct word, 3 rounds, max 9 pts, score \u2265 8 to win"
+      ],
+      spinBtn: "\uD83C\uDFAF Spin the Wheel",
+      spinPrompt: "Spin the wheel to pick a Leadership Expectations",
+      scoreLabel: "Score",
+      roundLabel: "Round",
+      submitBtn: function(n){ return "Submit Answer (Selected "+n+"/3)"; },
+      perfect: function(s){ return "Perfect! All correct! You earned "+s+" point(s)."; },
+      partial: function(n,s,ans){ return n+" correct, earned "+s+" pt(s). Answers: "+ans; },
+      sep: ", ",
+      roundEnd: "Round Over", gameEnd: "Game Over",
+      roundMsg: function(r,s,t){ return "Round "+r+" done! You earned <strong>"+s+"</strong> pt(s). Total: <strong>"+t+"</strong>."; },
+      nextRound: function(r){ return "<br><br>Get ready for Round "+r+"!"; },
+      continueBtn: "Continue", viewResult: "View Result",
+      passTitle: "Congratulations! \uD83C\uDFC6", failTitle: "Game Over",
+      passMsg: function(s){ return "\uD83C\uDF89 Well done! You scored <strong>"+s+"</strong> and passed!"; },
+      failMsg: function(s){ return "You scored <strong>"+s+"</strong>. You need \u2265 8 points to pass. Keep it up!"; },
+      restart: "Play Again"
+    }
+  }
+};
+
+const categoryColors = {
+  "\u5C0A\u91CD\u4E2A\u4EBA":"#0071ce", "\u8BDA\u4FE1\u884C\u4E8B":"#4CAF50",
+  "\u670D\u52A1\u987E\u5BA2\u548C\u4F1A\u5458":"#FF9800", "\u8FFD\u6C42\u5353\u8D8A":"#9C27B0",
+  "Respect the Individual":"#0071ce", "Act with Integrity":"#4CAF50",
+  "Serve Our Customers and Members":"#FF9800", "Strive for Excellence":"#9C27B0"
+};
+
+let lang='zh', isSpinning=false, currentCategory=null, selectedWords=[];
+let score=0, round=0, currentRotation=0, usedCategories=[];
+const maxRounds=3, wordsPerRound=3, passingScore=8;
+const CX=140, CY=140, R=135;
+
+function startGame(l) {
+  lang = l;
+  document.getElementById('langScreen').style.display = 'none';
+  document.getElementById('gameScreen').style.display = 'block';
+  isSpinning=false; currentCategory=null; selectedWords=[];
+  score=0; round=0; currentRotation=0; usedCategories=[];
+  renderUI();
+  initWheel();
+  generateWordButtons();
+}
+
+function backToLang() {
+  document.getElementById('gameScreen').style.display = 'none';
+  document.getElementById('langScreen').style.display = 'flex';
+}
+
+function renderUI() {
+  const u = GAME_DATA[lang].ui;
+  document.getElementById('gameTitle').textContent = u.title;
+  document.getElementById('rulesTitle').textContent = u.rulesTitle;
+  const ul = document.getElementById('rulesList');
+  ul.innerHTML = '';
+  u.rules.forEach(r => { const li=document.createElement('li'); li.textContent=r; ul.appendChild(li); });
+  document.getElementById('spinButton').textContent = u.spinBtn;
+  document.getElementById('selectedCategory').textContent = u.spinPrompt;
+  document.getElementById('scoreLabel').textContent = u.scoreLabel+': 0';
+  document.getElementById('roundLabel').textContent = u.roundLabel+': 0/3';
+  document.getElementById('resultMessage').textContent = '';
+  document.getElementById('resultMessage').className = 'result-message';
+  updateCount();
+}
+
+function polarToXY(deg, r) {
+  const rad = (deg-90)*Math.PI/180;
+  return { x: CX+r*Math.cos(rad), y: CY+r*Math.sin(rad) };
+}
+
+function initWheel() {
+  const svg = document.getElementById('wheelSvg');
+  svg.innerHTML = '';
+  svg.style.transition = 'none';
+  svg.style.transform = 'rotate(0deg)';
+  currentRotation = 0;
+
+  const cats = Object.keys(GAME_DATA[lang].categories);
+  const slice = 360 / cats.length;
+
+  const ring = document.createElementNS('http://www.w3.org/2000/svg','circle');
+  ring.setAttribute('cx',CX); ring.setAttribute('cy',CY); ring.setAttribute('r',R+8); ring.setAttribute('fill','#004c91');
+  svg.appendChild(ring);
+
+  cats.forEach((cat, i) => {
+    const start=slice*i, end=slice*(i+1), mid=(start+end)/2;
+    const p1=polarToXY(start,R), p2=polarToXY(end,R);
+    const path=document.createElementNS('http://www.w3.org/2000/svg','path');
+    path.setAttribute('d',`M ${CX} ${CY} L ${p1.x} ${p1.y} A ${R} ${R} 0 0 1 ${p2.x} ${p2.y} Z`);
+    path.setAttribute('fill',categoryColors[cat]); path.setAttribute('stroke','white'); path.setAttribute('stroke-width','2');
+    svg.appendChild(path);
+
+    // Draw label text
+    const tp = polarToXY(mid, R*0.58);
+    const g = document.createElementNS('http://www.w3.org/2000/svg','g');
+    g.setAttribute('transform',`translate(${tp.x},${tp.y}) rotate(${mid})`);
+    const lines = cat.split('\n');
+    const isEn = lang==='en';
+    // For English, split by space into 2 lines if no \n
+    let displayLines = lines;
+    if (isEn && lines.length === 1) {
+      const words = cat.split(' ');
+      const mid = Math.ceil(words.length / 2);
+      displayLines = [words.slice(0,mid).join(' '), words.slice(mid).join(' ')].filter(Boolean);
+    }
+    const fSize = isEn ? 13 : (cat.replace('\n','').length>6?13:15);
+    const lineH = isEn ? 13 : 18;
+    const totalH = displayLines.length * lineH;
+    displayLines.forEach((line,li) => {
+      const t=document.createElementNS('http://www.w3.org/2000/svg','text');
+      t.setAttribute('x','0');
+      t.setAttribute('y', String(-totalH/2+li*lineH+lineH*0.8));
+      t.setAttribute('text-anchor','middle');
+      t.setAttribute('fill','white');
+      t.setAttribute('font-size', String(fSize));
+      t.setAttribute('font-weight','bold');
+      t.setAttribute('font-family','PingFang SC,Microsoft YaHei,Arial,sans-serif');
+      t.textContent=line;
+      g.appendChild(t);
+    });
+    svg.appendChild(g);
+  });
+
+  const center=document.createElementNS('http://www.w3.org/2000/svg','circle');
+  center.setAttribute('cx',CX); center.setAttribute('cy',CY); center.setAttribute('r','18');
+  center.setAttribute('fill','white'); center.setAttribute('stroke','#004c91'); center.setAttribute('stroke-width','3');
+  svg.appendChild(center);
+}
+
+function generateWordButtons() {
+  const el = document.getElementById('wordButtons');
+  el.innerHTML = '';
+  selectedWords = [];
+  updateCount();
+  const all = [];
+  Object.values(GAME_DATA[lang].categories).forEach(arr => {
+    arr.forEach(w => all.push(w));
+  });
+  all.sort(()=>Math.random()-0.5).forEach(word => {
+    const btn=document.createElement('button');
+    btn.className='word-button';
+    btn.textContent=word.replace(/\n/g,' ');
+    btn.dataset.word=word;
+    btn.addEventListener('click',()=>{
+      if(isSpinning||!currentCategory) return;
+      if(btn.classList.contains('selected')){ btn.classList.remove('selected'); selectedWords=selectedWords.filter(w=>w!==word); }
+      else if(selectedWords.length<wordsPerRound){ btn.classList.add('selected'); selectedWords.push(word); }
+      updateCount();
+    });
+    el.appendChild(btn);
+  });
+}
+
+function updateCount() {
+  const u=GAME_DATA[lang].ui;
+  document.getElementById('submitLabel').textContent = u.submitBtn(selectedWords.length);
+  document.getElementById('submitButton').disabled = (selectedWords.length!==wordsPerRound||isSpinning||!currentCategory);
+}
+
+function spinWheel() {
+  if(isSpinning) return;
+  const svg=document.getElementById('wheelSvg');
+  isSpinning=true;
+  document.getElementById('spinButton').disabled=true;
+  document.getElementById('submitButton').disabled=true;
+  document.getElementById('resultMessage').textContent='';
+  document.getElementById('resultMessage').className='result-message';
+  document.querySelectorAll('.word-button').forEach(b=>{b.classList.remove('selected','correct','incorrect');b.disabled=false;});
+  selectedWords=[]; updateCount();
+
+  const cats=Object.keys(GAME_DATA[lang].categories);
+  const available=cats.filter(c=>!usedCategories.includes(c));
+  const chosen=available[Math.floor(Math.random()*available.length)];
+  const idx=cats.indexOf(chosen);
+  currentCategory=chosen;
+
+  const slice=360/cats.length;
+  const sliceCenter=slice*idx+slice/2;
+  const targetAngle=360-(sliceCenter%360);
+  currentRotation=Math.ceil(currentRotation/360)*360+360*10+targetAngle;
+
+  svg.classList.add('spinning');
+  svg.style.transition='transform 5s cubic-bezier(0.25,0.1,0.1,1)';
+  svg.style.transform=`rotate(${currentRotation}deg)`;
+
+  setTimeout(()=>{
+    svg.classList.remove('spinning');
+    svg.style.transition='transform 0.15s ease-out';
+    svg.style.transform=`rotate(${currentRotation+6}deg)`;
+    setTimeout(()=>{
+      svg.style.transition='transform 0.15s ease-in-out';
+      svg.style.transform=`rotate(${currentRotation-3}deg)`;
+      setTimeout(()=>{
+        svg.style.transition='transform 0.1s ease-out';
+        svg.style.transform=`rotate(${currentRotation}deg)`;
+        setTimeout(()=>{
+          isSpinning=false;
+          document.getElementById('spinButton').disabled=false;
+          const cat=document.getElementById('selectedCategory');
+          cat.textContent=currentCategory.replace(/\n/g,' ');
+          cat.style.background=`linear-gradient(to right,${categoryColors[currentCategory]},${darken(categoryColors[currentCategory],20)})`;
+          updateCount();
+        },150);
+      },150);
+    },150);
+  },5000);
+}
+
+function darken(hex,pct){
+  const n=parseInt(hex.slice(1),16),a=Math.round(2.55*pct);
+  const R=(n>>16)-a,G=(n>>8&0xFF)-a,B=(n&0xFF)-a;
+  return '#'+(0x1000000+(R<0?0:R)*0x10000+(G<0?0:G)*0x100+(B<0?0:B)).toString(16).slice(1);
+}
+
+function submitAnswer(){
+  const u=GAME_DATA[lang].ui;
+  if(isSpinning||!currentCategory||selectedWords.length!==wordsPerRound) return;
+  round++;
+  document.getElementById('scoreLabel').textContent=u.scoreLabel+': '+score;
+  document.getElementById('roundLabel').textContent=u.roundLabel+': '+round+'/3';
+  document.querySelectorAll('.word-button').forEach(b=>b.disabled=true);
+  document.getElementById('submitButton').disabled=true;
+
+  const correct=GAME_DATA[lang].categories[currentCategory];
+  usedCategories.push(currentCategory);
+  let cnt=0;
+  selectedWords.forEach(w=>{
+    const b=document.querySelector(`.word-button[data-word="${w}"]`);
+    if(correct.includes(w)){b.classList.add('correct');cnt++;}
+    else b.classList.add('incorrect');
+  });
+
+  score+=cnt;
+  document.getElementById('scoreLabel').textContent=u.scoreLabel+': '+score;
+  const rm=document.getElementById('resultMessage');
+  if(cnt===wordsPerRound){ rm.textContent=u.perfect(cnt); rm.className='result-message correct-message'; }
+  else { rm.textContent=u.partial(cnt,cnt,correct.map(w=>w.replace(/\n/g,' ')).join(u.sep)); rm.className='result-message incorrect-message'; }
+  setTimeout(()=>showRoundModal(cnt,round>=maxRounds),1500);
+}
+
+function showRoundModal(rs,isFinal){
+  const u=GAME_DATA[lang].ui;
+  const m=document.createElement('div');
+  m.className='modal-overlay';
+  let msg=u.roundMsg(round,rs,score);
+  if(!isFinal) msg+=u.nextRound(round+1);
+  m.innerHTML=`<div class="modal-content">
+    <h2 class="modal-title">${isFinal?u.gameEnd:u.roundEnd}</h2>
+    <p class="modal-message">${msg}</p>
+    <button class="modal-button" id="mBtn">${isFinal?u.viewResult:u.continueBtn}</button>
+  </div>`;
+  document.body.appendChild(m);
+  document.getElementById('mBtn').addEventListener('click',()=>{
+    document.body.removeChild(m);
+    if(isFinal) showFinalModal(); else document.getElementById('spinButton').disabled=false;
+  });
+}
+
+function showFinalModal(){
+  const u=GAME_DATA[lang].ui;
+  const passed=score>=passingScore;
+  const m=document.createElement('div');
+  m.className='modal-overlay';
+  m.innerHTML=`<div class="modal-content">
+    <h2 class="modal-title">${passed?u.passTitle:u.failTitle}</h2>
+    <p class="modal-message">${passed?u.passMsg(score):u.failMsg(score)}</p>
+    <button class="modal-button" onclick="location.reload()">${u.restart}</button>
+  </div>`;
+  document.body.appendChild(m);
+}
+
+document.getElementById('spinButton').addEventListener('click',spinWheel);
+document.getElementById('submitButton').addEventListener('click',submitAnswer);
+</script>
+</body>
+</html>
